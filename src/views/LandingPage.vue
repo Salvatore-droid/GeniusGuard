@@ -67,8 +67,10 @@
             INSTANT SECURITY SCAN
           </button>
           <button class="cta-secondary" @click="watchDemo">
-            <span class="btn-icon">🎬</span>
-            WATCH DEMO
+            <router-link to="/deep-scan" >
+                <span class="btn-icon">🔍</span>
+                DEEP SECURITY SCAN
+            </router-link>
           </button>
         </div>
       </div>
@@ -740,6 +742,7 @@ onMounted(() => {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  text-decoration: none;
 }
 
 .cta-primary {

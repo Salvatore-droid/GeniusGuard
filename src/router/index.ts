@@ -8,7 +8,13 @@ const router = createRouter({
       name: 'landing',
       // Use this simple component first to test
       component: () => import('../views/LandingPage.vue')
+    },
+    {
+      path: '/deep-scan',
+      name: 'deep-scan',
+      component: () => import('../views/DeepScanDashboard.vue')
     }
+
   ]
 })
 
