@@ -4,8 +4,8 @@
     <nav class="cyber-nav">
       <div class="nav-container">
         <div class="nav-logo">
-          <div class="logo-icon">⚡</div>
-          <span class="logo-text">GENIUS</span>
+          <img src="../assets/images/icon128.png" alt="GeniusGuard" class="logo-icon">
+          <span class="logo-text">GENIUSGUARD</span>
         </div>
         <div class="nav-links">
           <a href="#features" class="nav-link">FEATURES</a>
@@ -34,9 +34,10 @@
         </div>
         
         <h1 class="hero-title">
-          <span class="title-line">GENIUS</span>
-          <span class="title-line">SOFTWARE</span>
-          <span class="title-line gradient-text">GUARD</span>
+          <div class="hero-logo">
+            <img src="../assets/images/icon128.png" alt="GeniusGuard" class="logo-icon">
+          </div>
+          <span class="title-line gradient-text">GENIUSGUARD</span>          
         </h1>
         
         <p class="hero-subtitle">
@@ -116,6 +117,12 @@
             </button>
           </div>
 
+          <!-- Demo Mode Indicator -->
+          <div v-if="isDemoMode" class="demo-mode-indicator">
+            <span class="demo-icon">🎮</span>
+            DEMO MODE - Using simulated data
+          </div>
+
           <!-- Connection Status -->
           <div v-if="connectionStatus" class="connection-status" :class="connectionStatus.type">
             <span class="status-icon">{{ connectionStatus.icon }}</span>
@@ -184,6 +191,10 @@
               <div class="summary-item">
                 <span class="summary-label">Vulnerabilities Found:</span>
                 <span class="summary-value">{{ currentScanResult.total_vulnerabilities }}</span>
+              </div>
+              <div v-if="isDemoMode" class="summary-item">
+                <span class="summary-label">Mode:</span>
+                <span class="summary-value demo">Demo Mode</span>
               </div>
             </div>
 
@@ -287,7 +298,7 @@
       <div class="container">
         <div class="cta-content">
           <h2>READY TO SECURE YOUR DIGITAL PRESENCE?</h2>
-          <p>Join thousands of enterprises protecting their assets with DeepPatch AI</p>
+          <p>Join thousands of enterprises protecting their assets with Genius Software Guard</p>
           <div class="cta-actions">
             <button class="cta-primary large" @click="startQuickScan">START FREE SCAN</button>
             <button class="cta-secondary large" @click="navigateToDashboard">VIEW DASHBOARD</button>
@@ -306,7 +317,7 @@
       <div class="container">
         <div class="footer-content">
           <div class="footer-brand">
-            <div class="logo">DEEPPATCH</div>
+            <div class="logo">GENIUS GUARD</div>
             <p>Quantum Security Intelligence Platform</p>
           </div>
           <div class="footer-links">
@@ -331,7 +342,7 @@
           </div>
         </div>
         <div class="footer-bottom">
-          <p>&copy; 2024 DeepPatch Security. All rights reserved.</p>
+          <p>&copy; 2024 Genius Software Guard. All rights reserved.</p>
         </div>
       </div>
     </footer>
@@ -360,18 +371,47 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
-
 const router = useRouter()
 
-// Smart API base URL detection
-const getApiBase = () => {
-  return '/api' // Using proxy, so relative path is fine
-}
-
-const API_BASE = ref(getApiBase())
+// Smart API configuration
+const API_BASE = '/api'
+const isDemoMode = ref(false)
 const backendAvailable = ref(false)
 
-// Reactive data - ADD THE MISSING PROPERTIES HERE
+// Authentication helper
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('auth_token')
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` })
+  }
+}
+
+// Check if user is authenticated
+const checkAuthentication = () => {
+  const token = localStorage.getItem('auth_token')
+  return !!token
+}
+
+// Error handling helper
+const handleApiError = (error: any, context = '') => {
+  console.error(`API Error in ${context}:`, error)
+  
+  if (error.status === 403) {
+    showStatus('warning', 'Authentication required for full features. Using demo mode.')
+    return true
+  }
+  
+  if (error.status === 404) {
+    showStatus('warning', 'Service temporarily unavailable. Using demo mode.')
+    return true
+  }
+  
+  showStatus('error', `Request failed: ${error.message}`)
+  return false
+}
+
+// Reactive data
 const targetUrl = ref('')
 const scanning = ref(false)
 const scanProgress = ref(0)
@@ -380,7 +420,6 @@ const showScanModal = ref(false)
 const quickScanUrl = ref('')
 const connectionStatus = ref<{type: string, message: string, icon: string} | null>(null)
 
-// ADD THESE MISSING PROPERTIES:
 const features = ref([
   { 
     id: 1, 
@@ -450,7 +489,7 @@ const riskScoreClass = computed(() => {
   return 'low'
 })
 
-// ... rest of your methods remain the same
+// Methods
 const showStatus = (type: string, message: string) => {
   const icons = { info: 'ℹ️', success: '✅', error: '❌', warning: '⚠️' }
   connectionStatus.value = { type, message, icon: icons[type as keyof typeof icons] }
@@ -465,12 +504,14 @@ const initiateQuickScan = async () => {
     return
   }
 
-  if (!backendAvailable.value) {
-    showStatus('warning', 'Backend unavailable - running in demo mode')
-    await mockScan()
-    return
-  }
+  // For landing page, always use demo mode for quick scans
+  // if (!checkAuthentication()) {
+  //   showStatus('info', 'Using demo mode - sign in for full features')
+  //   await mockScan()
+  //   return
+  // }
 
+  // If authenticated, try real scan
   scanning.value = true
   scanProgress.value = 0
   scanComplete.value = false
@@ -486,11 +527,9 @@ const initiateQuickScan = async () => {
   try {
     showStatus('info', 'Initiating security scan...')
     
-    const response = await fetch(`${API_BASE.value}/quick-scan/`, {
+    const response = await fetch(`${API_BASE}/quick-scan/`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         url: targetUrl.value
       })
@@ -507,7 +546,7 @@ const initiateQuickScan = async () => {
     currentScanResult.value = {
       risk_score: data.findings?.risk_score || calculateRiskScore(data.findings),
       target_url: targetUrl.value,
-      scan_duration: Math.random() * 30 + 10,
+      scan_duration: data.scan_duration || Math.random() * 30 + 10,
       total_vulnerabilities: data.findings?.vulnerabilities?.length || 0,
       vulnerabilities: data.findings?.vulnerabilities || []
     }
@@ -522,7 +561,7 @@ const initiateQuickScan = async () => {
     
   } catch (error) {
     console.error('Scan failed:', error)
-    showStatus('error', 'Scan failed - using demo mode')
+    showStatus('warning', 'Using demo mode - backend unavailable')
     await mockScan()
   }
 }
@@ -572,6 +611,7 @@ const updateDetectedVulnerabilities = (vulnerabilities: any[]) => {
 }
 
 const mockScan = async () => {
+  isDemoMode.value = true
   await simulateScanProgress()
   
   currentScanResult.value = {
@@ -602,7 +642,7 @@ const mockScan = async () => {
   updateDetectedVulnerabilities(currentScanResult.value.vulnerabilities)
   scanComplete.value = true
   scanning.value = false
-  showStatus('success', 'Demo scan completed!')
+  showStatus('success', 'Demo scan completed! Sign in for full features.')
 }
 
 const startQuickScan = () => {
@@ -623,47 +663,55 @@ const closeModal = () => {
 }
 
 const navigateToDeepScan = () => {
+  if (!checkAuthentication()) {
+    showStatus('warning', 'Please sign in to access Deep Scan features')
+    router.push('/login')
+    return
+  }
   router.push('/deep-scan')
 }
 
 const navigateToDashboard = () => {
+  if (!checkAuthentication()) {
+    showStatus('warning', 'Please sign in to access Dashboard')
+    router.push('/login')
+    return
+  }
   router.push('/dashboard')
 }
 
 const loadGlobalStats = async () => {
-  if (!backendAvailable.value) {
-    globalStats.value = {
-      total_scans: 1247,
-      high_risk_scans: 283,
-      total_vulnerabilities_found: 892
-    }
-    return
-  }
-
   try {
-    const response = await fetch(`${API_BASE.value}/global-stats/`)
+    const response = await fetch(`${API_BASE}/global-stats/`, {
+      headers: getAuthHeaders()
+    })
+    
     if (response.ok) {
       const data = await response.json()
       if (data.length > 0) {
         globalStats.value = data[0]
       }
+      isDemoMode.value = false
+    } else {
+      // Use mock data if API fails
+      useMockData()
     }
   } catch (error) {
     console.error('Failed to load global stats:', error)
+    useMockData()
   }
 }
 
 const loadThreatIntelligence = async () => {
-  if (!backendAvailable.value) {
-    loadMockThreats()
-    return
-  }
-
   try {
-    const response = await fetch(`${API_BASE.value}/threat-intelligence/live_feed/`)
+    const response = await fetch(`${API_BASE}/threat-intelligence/live_feed/`, {
+      headers: getAuthHeaders()
+    })
+    
     if (response.ok) {
       const data = await response.json()
       liveThreats.value = data
+      isDemoMode.value = false
     } else {
       loadMockThreats()
     }
@@ -673,7 +721,17 @@ const loadThreatIntelligence = async () => {
   }
 }
 
+const useMockData = () => {
+  isDemoMode.value = true
+  globalStats.value = {
+    total_scans: 1247,
+    high_risk_scans: 283,
+    total_vulnerabilities_found: 892
+  }
+}
+
 const loadMockThreats = () => {
+  isDemoMode.value = true
   liveThreats.value = [
     { 
       id: 1, 
@@ -743,11 +801,9 @@ const checkBackendConnection = async () => {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 5000)
     
-    const response = await fetch(`${API_BASE.value}/global-stats/`, {
+    const response = await fetch(`${API_BASE}/global-stats/`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       signal: controller.signal
     })
     
@@ -755,15 +811,18 @@ const checkBackendConnection = async () => {
     
     if (response.ok) {
       backendAvailable.value = true
+      isDemoMode.value = false
       showStatus('success', 'Backend connected successfully')
     } else {
       backendAvailable.value = false
-      showStatus('warning', 'Backend responded with error - using demo mode')
+      isDemoMode.value = true
+      showStatus('info', 'Using demo mode - limited functionality')
     }
   } catch (error) {
     console.warn('Backend not available, using demo mode:', error)
     backendAvailable.value = false
-    showStatus('warning', 'Backend unavailable - using demo mode')
+    isDemoMode.value = true
+    showStatus('info', 'Using demo mode - limited functionality')
   }
 }
 
@@ -784,7 +843,31 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Add new styles for scan summary */
+/* Add new styles for demo mode and enhanced UI */
+.demo-mode-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(255, 165, 0, 0.1);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  border-radius: 8px;
+  color: #ffa500;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  margin: 1rem 0;
+}
+
+.demo-icon {
+  font-size: 1.2rem;
+}
+
+.summary-value.demo {
+  color: #ffa500;
+  font-weight: 700;
+}
+
 .scan-summary {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -912,24 +995,54 @@ onMounted(() => {
   margin: 0 auto;
 }
 
+/* Navigation Logo Styles */
 .nav-logo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-family: 'Orbitron', monospace;
-  font-weight: 700;
+  gap: 0.75rem;
+}
+
+.hero-logo{
+  img{
+    width: 150px;  /* Fixed size - not oversized */
+    height: 150px; /* Fixed size - not oversized */
+    object-fit: cover;
+    filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.5));
+    transition: all 0.3s ease;
+  }
+  
 }
 
 .logo-icon {
-  font-size: 1.5rem;
-  color: #00f0ff;
+  width: 32px;  /* Fixed size - not oversized */
+  height: 32px; /* Fixed size - not oversized */
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.5));
+  transition: all 0.3s ease;
+}
+
+.logo-icon:hover {
+  filter: drop-shadow(0 0 12px rgba(0, 240, 255, 0.8));
+  transform: scale(1.05);
 }
 
 .logo-text {
-  font-size: 1.2rem;
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  font-size: 1.25rem;
   background: linear-gradient(135deg, #00f0ff, #b967ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  letter-spacing: 2px;
+}
+
+/* Remove any conflicting styles that might be making it oversized */
+.nav-logo .logo-icon {
+  /* Ensure no other styles override the size */
+  width: 32px !important;
+  height: 32px !important;
+  max-width: 32px !important;
+  max-height: 32px !important;
 }
 
 .nav-links {
@@ -1096,7 +1209,7 @@ onMounted(() => {
 
 .hero-title {
   font-family: 'Orbitron', monospace;
-  font-size: clamp(3rem, 8vw, 6rem);
+  font-size: clamp(2rem, 5vw, 4rem);
   font-weight: 900;
   line-height: 1.1;
   margin-bottom: 1.5rem;

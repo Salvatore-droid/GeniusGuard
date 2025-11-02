@@ -13,7 +13,12 @@ const router = createRouter({
       path: '/deep-scan',
       name: 'deep-scan',
       component: () => import('../views/DeepScanDashboard.vue')
-    }
+    },
+    {
+      path: '/login',
+      name: 'Login',
+      component: () => import('../views/LoginPage.vue')
+    },
 
   ]
 })
