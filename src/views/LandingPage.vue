@@ -81,148 +81,374 @@
       </div>
     </section>
 
-    <!-- Quick Scanner Section -->
-    <section id="scanner" class="scanner-section">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">QUANTUM SECURITY SCANNER</h2>
-          <p class="section-subtitle">Enter any URL for instant AI-powered vulnerability analysis</p>
-        </div>
-
-        <div class="scanner-interface">
-          <!-- URL Input -->
-          <div class="scanner-input-group">
-            <div class="input-container">
-              <input 
-                v-model="targetUrl"
-                type="text" 
-                placeholder="https://your-website.com"
-                class="cyber-input scanner-input"
-                :disabled="scanning"
-                @keyup.enter="initiateQuickScan"
-              />
-              <div class="input-decoration">
-                <div class="input-line"></div>
-              </div>
-            </div>
-            <button 
-              class="scan-button"
-              :class="{ scanning: scanning }"
-              @click="initiateQuickScan"
-              :disabled="scanning || !targetUrl"
-            >
-              <span v-if="!scanning" class="scan-text">LAUNCH SCAN</span>
-              <span v-else class="scan-text">SCANNING...</span>
-              <div class="scan-progress" :style="{ width: `${scanProgress}%` }"></div>
-            </button>
+    <!-- Main Content with AI Sidebar -->
+    <div class="main-content-with-ai">
+      <!-- Left Side - Scanner Section -->
+      <section id="scanner" class="scanner-section">
+        <div class="container">
+          <div class="section-header">
+            <h2 class="section-title">QUANTUM SECURITY SCANNER</h2>
+            <p class="section-subtitle">Enter any URL for instant AI-powered vulnerability analysis</p>
           </div>
 
-          <!-- Demo Mode Indicator -->
-          <div v-if="isDemoMode" class="demo-mode-indicator">
-            <span class="demo-icon">🎮</span>
-            DEMO MODE - Using simulated data
-          </div>
-
-          <!-- Connection Status -->
-          <div v-if="connectionStatus" class="connection-status" :class="connectionStatus.type">
-            <span class="status-icon">{{ connectionStatus.icon }}</span>
-            {{ connectionStatus.message }}
-          </div>
-
-          <!-- Scan Visualization -->
-          <div v-if="scanning" class="scan-visualization">
-            <div class="scan-layers">
-              <div class="scan-layer" :style="{ animationDelay: '0s' }">
-                <div class="layer-label">INITIAL RECONNAISSANCE</div>
-                <div class="layer-progress"></div>
+          <div class="scanner-interface">
+            <!-- URL Input -->
+            <div class="scanner-input-group">
+              <div class="input-container">
+                <input 
+                  v-model="targetUrl"
+                  type="text" 
+                  placeholder="https://your-website.com"
+                  class="cyber-input scanner-input"
+                  :disabled="scanning"
+                  @keyup.enter="initiateQuickScan"
+                />
+                <div class="input-decoration">
+                  <div class="input-line"></div>
+                </div>
               </div>
-              <div class="scan-layer" :style="{ animationDelay: '1s' }">
-                <div class="layer-label">VULNERABILITY SCANNING</div>
-                <div class="layer-progress"></div>
-              </div>
-              <div class="scan-layer" :style="{ animationDelay: '2s' }">
-                <div class="layer-label">THREAT INTELLIGENCE</div>
-                <div class="layer-progress"></div>
-              </div>
-              <div class="scan-layer" :style="{ animationDelay: '3s' }">
-                <div class="layer-label">COMPLIANCE ASSESSMENT</div>
-                <div class="layer-progress"></div>
-              </div>
-            </div>
-
-            <!-- Vulnerability Indicators -->
-            <div class="vulnerability-indicators">
-              <div 
-                v-for="vuln in detectedVulnerabilities" 
-                :key="vuln.id"
-                class="vulnerability-indicator"
-                :class="{ active: vuln.detected }"
+              <button 
+                class="scan-button"
+                :class="{ scanning: scanning }"
+                @click="initiateQuickScan"
+                :disabled="scanning || !targetUrl"
               >
-                <div class="indicator-icon" :class="vuln.severity">
-                  {{ getVulnIcon(vuln.type) }}
-                </div>
-                <div class="indicator-name">{{ vuln.name }}</div>
-                <div class="indicator-severity" :class="vuln.severity">
-                  {{ vuln.severity }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Scan Results -->
-          <div v-if="scanComplete" class="scan-results">
-            <div class="results-header">
-              <h3>SCAN COMPLETE</h3>
-              <div class="risk-score" :class="riskScoreClass">
-                RISK SCORE: {{ currentScanResult.risk_score || 0 }}/100
-              </div>
-            </div>
-            
-            <!-- Scan Summary -->
-            <div class="scan-summary">
-              <div class="summary-item">
-                <span class="summary-label">Target:</span>
-                <span class="summary-value">{{ currentScanResult.target_url }}</span>
-              </div>
-              <div class="summary-item">
-                <span class="summary-label">Duration:</span>
-                <span class="summary-value">{{ currentScanResult.scan_duration }} seconds</span>
-              </div>
-              <div class="summary-item">
-                <span class="summary-label">Vulnerabilities Found:</span>
-                <span class="summary-value">{{ currentScanResult.total_vulnerabilities }}</span>
-              </div>
-              <div v-if="isDemoMode" class="summary-item">
-                <span class="summary-label">Mode:</span>
-                <span class="summary-value demo">Demo Mode</span>
-              </div>
+                <span v-if="!scanning" class="scan-text">LAUNCH SCAN</span>
+                <span v-else class="scan-text">SCANNING...</span>
+                <div class="scan-progress" :style="{ width: `${scanProgress}%` }"></div>
+              </button>
             </div>
 
-            <!-- Vulnerabilities List -->
-            <div class="results-grid">
-              <div class="result-card" v-for="vulnerability in currentScanResult.vulnerabilities" :key="vulnerability.id">
-                <div class="result-severity" :class="vulnerability.severity"></div>
-                <div class="result-content">
-                  <h4>{{ vulnerability.title }}</h4>
-                  <p>{{ vulnerability.description }}</p>
-                  <div class="result-meta">
-                    <span class="result-cvss">CVSS: {{ vulnerability.cvss_score }}</span>
-                    <span class="result-fix">FIX: {{ vulnerability.recommendation }}</span>
+            <!-- Demo Mode Indicator -->
+            <div v-if="isDemoMode" class="demo-mode-indicator">
+              <span class="demo-icon">🎮</span>
+              DEMO MODE - Using simulated data
+            </div>
+
+            <!-- Connection Status -->
+            <div v-if="connectionStatus" class="connection-status" :class="connectionStatus.type">
+              <span class="status-icon">{{ connectionStatus.icon }}</span>
+              {{ connectionStatus.message }}
+            </div>
+
+            <!-- Scan Visualization -->
+            <div v-if="scanning" class="scan-visualization">
+              <div class="scan-layers">
+                <div class="scan-layer" :style="{ animationDelay: '0s' }">
+                  <div class="layer-label">INITIAL RECONNAISSANCE</div>
+                  <div class="layer-progress"></div>
+                </div>
+                <div class="scan-layer" :style="{ animationDelay: '1s' }">
+                  <div class="layer-label">VULNERABILITY SCANNING</div>
+                  <div class="layer-progress"></div>
+                </div>
+                <div class="scan-layer" :style="{ animationDelay: '2s' }">
+                  <div class="layer-label">THREAT INTELLIGENCE</div>
+                  <div class="layer-progress"></div>
+                </div>
+                <div class="scan-layer" :style="{ animationDelay: '3s' }">
+                  <div class="layer-label">COMPLIANCE ASSESSMENT</div>
+                  <div class="layer-progress"></div>
+                </div>
+              </div>
+
+              <!-- Vulnerability Indicators -->
+              <div class="vulnerability-indicators">
+                <div 
+                  v-for="vuln in detectedVulnerabilities" 
+                  :key="vuln.id"
+                  class="vulnerability-indicator"
+                  :class="{ active: vuln.detected }"
+                >
+                  <div class="indicator-icon" :class="vuln.severity">
+                    {{ getVulnIcon(vuln.type) }}
+                  </div>
+                  <div class="indicator-name">{{ vuln.name }}</div>
+                  <div class="indicator-severity" :class="vuln.severity">
+                    {{ vuln.severity }}
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- No Vulnerabilities Message -->
-            <div v-if="currentScanResult.vulnerabilities && currentScanResult.vulnerabilities.length === 0" class="no-vulnerabilities">
-              <div class="safe-icon">✅</div>
-              <h4>No Vulnerabilities Detected</h4>
-              <p>Your target appears to be secure based on our scan results.</p>
+            <!-- Scan Results -->
+            <div v-if="scanComplete" class="scan-results">
+              <div class="results-header">
+                <h3>SCAN COMPLETE</h3>
+                <div class="risk-score" :class="riskScoreClass">
+                  RISK SCORE: {{ currentScanResult.risk_score || 0 }}/100
+                </div>
+              </div>
+              
+              <!-- Scan Summary -->
+              <div class="scan-summary">
+                <div class="summary-item">
+                  <span class="summary-label">Target:</span>
+                  <span class="summary-value">{{ currentScanResult.target_url }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Duration:</span>
+                  <span class="summary-value">{{ currentScanResult.scan_duration }} seconds</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Vulnerabilities Found:</span>
+                  <span class="summary-value">{{ currentScanResult.total_vulnerabilities }}</span>
+                </div>
+              </div>
+
+              <!-- Vulnerabilities List -->
+              <div class="vulnerabilities-list">
+                <div class="vulnerability-card" 
+                     v-for="vulnerability in currentScanResult.vulnerabilities" 
+                     :key="vulnerability.id"
+                     :class="{ 'active': activeVulnerability?.id === vulnerability.id }"
+                     @click="selectVulnerability(vulnerability)">
+                  <div class="vuln-header">
+                    <div class="severity-badge" :class="vulnerability.severity">
+                      {{ vulnerability.severity.toUpperCase() }}
+                    </div>
+                    <div class="cvss-score">CVSS: {{ vulnerability.cvss_score }}</div>
+                  </div>
+                  <h4 class="vuln-title">{{ vulnerability.title }}</h4>
+                  <p class="vuln-description">{{ truncateDescription(vulnerability.description) }}</p>
+                  <div class="vuln-footer">
+                    <span class="analysis-indicator" v-if="vulnerability.has_ai_analysis">
+                      🤖 AI Ready
+                    </span>
+                    <button class="select-btn" :class="{ 'selected': activeVulnerability?.id === vulnerability.id }">
+                      {{ activeVulnerability?.id === vulnerability.id ? 'Selected' : 'Analyze' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <!-- Right Side - AI Analysis Section -->
+      <section class="ai-analysis-section" :class="{ 'has-selection': activeVulnerability }">
+        <div class="ai-analysis-container">
+          <!-- Header -->
+          <div class="ai-header">
+            <div class="ai-title">
+              <div class="ai-icon">🤖</div>
+              <div class="title-content">
+                <h3>AI Security Analysis</h3>
+                <p>Powered by Groq AI • Real-time Insights</p>
+              </div>
+            </div>
+            <div class="ai-status" v-if="activeVulnerability">
+              <div class="status-badge" :class="activeVulnerability.severity">
+                {{ activeVulnerability.severity.toUpperCase() }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Selected Vulnerability -->
+          <div v-if="activeVulnerability" class="selected-vulnerability">
+            <h4 class="selected-title">{{ activeVulnerability.title }}</h4>
+            <p class="selected-description">{{ activeVulnerability.description }}</p>
+            <div class="vuln-stats">
+              <div class="stat">
+                <span class="stat-label">CVSS Score</span>
+                <span class="stat-value">{{ activeVulnerability.cvss_score }}/10</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">Priority</span>
+                <span class="stat-value" :class="getPriorityClass(activeVulnerability)">
+                  {{ getPriorityText(activeVulnerability) }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Analysis Interface -->
+          <div class="analysis-interface" v-if="activeVulnerability">
+            <!-- Analysis Type Selector -->
+            <div class="analysis-tabs">
+              <button class="tab-btn" 
+                      :class="{ 'active': currentAnalysisType === 'simple' }"
+                      @click="currentAnalysisType = 'simple'">
+                <span class="tab-icon">👥</span>
+                <span class="tab-text">Simple</span>
+              </button>
+              <button class="tab-btn" 
+                      :class="{ 'active': currentAnalysisType === 'technical' }"
+                      @click="currentAnalysisType = 'technical'">
+                <span class="tab-icon">⚙️</span>
+                <span class="tab-text">Technical</span>
+              </button>
+              <button class="tab-btn" 
+                      :class="{ 'active': currentAnalysisType === 'risk' }"
+                      @click="currentAnalysisType = 'risk'">
+                <span class="tab-icon">⚠️</span>
+                <span class="tab-text">Risk</span>
+              </button>
+            </div>
+
+            <!-- Analysis Content -->
+            <div class="analysis-content">
+              <!-- Loading State -->
+              <div v-if="aiAnalysisLoading" class="loading-state">
+                <div class="loading-animation">
+                  <div class="loading-dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                  </div>
+                </div>
+                <p class="loading-text">AI is analyzing the vulnerability...</p>
+                <p class="loading-subtext">Generating comprehensive security insights</p>
+              </div>
+
+              <!-- Error State -->
+              <div v-else-if="aiAnalysisError" class="error-state">
+                <div class="error-icon">⚠️</div>
+                <h5>Analysis Failed</h5>
+                <p>Unable to generate AI analysis at this time.</p>
+                <button class="retry-btn" @click="generateAIAnalysis(activeVulnerability)">
+                  Try Again
+                </button>
+              </div>
+
+              <!-- Simple Explanation -->
+              <div v-else-if="currentAnalysisType === 'simple' && currentAIAnalysis.simple_explanation" 
+                   class="analysis-view simple-view">
+                <div class="view-header">
+                  <h5>Simple Explanation</h5>
+                  <p>Easy-to-understand overview for everyone</p>
+                </div>
+                <div class="view-content">
+                  <div class="explanation-card">
+                    <p>{{ currentAIAnalysis.simple_explanation }}</p>
+                  </div>
+                  <div v-if="currentAIAnalysis.key_points && currentAIAnalysis.key_points.length" 
+                       class="key-points">
+                    <h6>Key Points</h6>
+                    <div class="points-list">
+                      <div class="point" v-for="(point, index) in currentAIAnalysis.key_points" :key="index">
+                        <span class="point-number">{{ index + 1 }}</span>
+                        <span class="point-text">{{ point }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Technical Explanation -->
+              <div v-else-if="currentAnalysisType === 'technical' && currentAIAnalysis.technical_explanation" 
+                   class="analysis-view technical-view">
+                <div class="view-header">
+                  <h5>Technical Analysis</h5>
+                  <p>Detailed technical insights for developers</p>
+                </div>
+                <div class="view-content">
+                  <div class="tech-section">
+                    <h6>Root Cause</h6>
+                    <p>{{ extractRootCause(currentAIAnalysis.technical_explanation) }}</p>
+                  </div>
+                  <div class="tech-section">
+                    <h6>Impact</h6>
+                    <p>{{ extractImpact(currentAIAnalysis.technical_explanation) }}</p>
+                  </div>
+                  <div class="tech-section">
+                    <h6>Remediation Steps</h6>
+                    <div class="steps">
+                      <div class="step" v-for="(step, index) in extractFixSteps(currentAIAnalysis.technical_explanation)" :key="index">
+                        <span class="step-number">{{ index + 1 }}</span>
+                        <span class="step-text">{{ step }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Risk Assessment -->
+              <div v-else-if="currentAnalysisType === 'risk' && currentAIAnalysis.risk_assessment" 
+                   class="analysis-view risk-view">
+                <div class="view-header">
+                  <h5>Risk Assessment</h5>
+                  <p>Business impact and security implications</p>
+                </div>
+                <div class="view-content">
+                  <div class="risk-summary">
+                    <p>{{ currentAIAnalysis.risk_assessment }}</p>
+                  </div>
+                  <div class="risk-metrics">
+                    <div class="metric">
+                      <div class="metric-info">
+                        <span class="metric-label">Exploitation Likelihood</span>
+                        <span class="metric-value">{{ getExploitationLikelihood(activeVulnerability) }}</span>
+                      </div>
+                      <div class="metric-bar">
+                        <div class="bar-fill" :style="{ width: getLikelihoodPercentage(activeVulnerability) }"></div>
+                      </div>
+                    </div>
+                    <div class="metric">
+                      <div class="metric-info">
+                        <span class="metric-label">Business Impact</span>
+                        <span class="metric-value">{{ getBusinessImpact(activeVulnerability) }}</span>
+                      </div>
+                      <div class="metric-bar">
+                        <div class="bar-fill" :style="{ width: getImpactPercentage(activeVulnerability) }"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- No Analysis Available -->
+              <div v-else class="no-analysis">
+                <div class="no-analysis-content">
+                  <div class="ai-graphic">🤖</div>
+                  <h5>AI Analysis Ready</h5>
+                  <p>Generate comprehensive AI-powered insights for this vulnerability</p>
+                  <button class="generate-btn" 
+                          @click="generateAIAnalysis(activeVulnerability)"
+                          :disabled="aiAnalysisLoading">
+                    {{ aiAnalysisLoading ? 'Generating...' : 'Generate Analysis' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Analysis Actions -->
+            <div class="analysis-actions" v-if="currentAIAnalysis.simple_explanation">
+              <button class="action-btn copy" @click="copyAnalysis">
+                📋 Copy
+              </button>
+              <button class="action-btn export" @click="exportAnalysis">
+                📄 Export
+              </button>
+            </div>
+          </div>
+
+          <!-- No Selection State -->
+          <div v-else class="no-selection">
+            <div class="no-selection-content">
+              <div class="selection-graphic">🔍</div>
+              <h4>Select a Vulnerability</h4>
+              <p>Click on any vulnerability from the scan results to view AI-powered analysis</p>
+              <div class="features">
+                <div class="feature">
+                  <span class="feature-icon">👥</span>
+                  <span>Simple explanations</span>
+                </div>
+                <div class="feature">
+                  <span class="feature-icon">⚙️</span>
+                  <span>Technical guides</span>
+                </div>
+                <div class="feature">
+                  <span class="feature-icon">⚠️</span>
+                  <span>Risk assessment</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
 
     <!-- Features Section -->
     <section id="features" class="features-section">
@@ -808,9 +1034,914 @@ onMounted(() => {
     clearInterval(threatsInterval)
   })
 })
+
+
+// AI Analysis Reactive State
+const activeVulnerability = ref<any>(null)
+const currentAnalysisType = ref('simple')
+const currentAIAnalysis = ref<any>({})
+const aiAnalysisLoading = ref(false)
+const aiAnalysisError = ref(false)
+
+// Methods
+const selectVulnerability = (vulnerability: any) => {
+  activeVulnerability.value = vulnerability
+  currentAnalysisType.value = 'simple'
+  currentAIAnalysis.value = {}
+  
+  // If vulnerability already has AI analysis, use it
+  if (vulnerability.has_ai_analysis && vulnerability.ai_analysis) {
+    currentAIAnalysis.value = vulnerability.ai_analysis
+  }
+}
+
+const generateAIAnalysis = async (vulnerability: any) => {
+  if (!vulnerability) return
+  
+  aiAnalysisLoading.value = true
+  aiAnalysisError.value = false
+  
+  try {
+    const response = await fetch(`${API_BASE}/ai-analysis/quick/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        vulnerability: {
+          title: vulnerability.title,
+          description: vulnerability.description,
+          severity: vulnerability.severity,
+          cvss_score: vulnerability.cvss_score,
+          recommendation: vulnerability.recommendation,
+          evidence: vulnerability.evidence
+        }
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('AI analysis failed')
+    }
+
+    const data = await response.json()
+    currentAIAnalysis.value = data.analysis
+    
+    // Update the vulnerability in the list to show it has AI analysis
+    const vulnIndex = currentScanResult.value.vulnerabilities.findIndex(
+      (v: any) => v.id === vulnerability.id
+    )
+    if (vulnIndex !== -1) {
+      currentScanResult.value.vulnerabilities[vulnIndex].has_ai_analysis = true
+      currentScanResult.value.vulnerabilities[vulnIndex].ai_analysis = data.analysis
+    }
+    
+  } catch (error) {
+    console.error('AI analysis error:', error)
+    aiAnalysisError.value = true
+  } finally {
+    aiAnalysisLoading.value = false
+  }
+}
+
+// Helper Methods (same as before, but simplified)
+const truncateDescription = (description: string, length: number = 100) => {
+  if (!description) return ''
+  return description.length > length ? description.substring(0, length) + '...' : description
+}
+
+const extractRootCause = (technicalExplanation: string) => {
+  if (!technicalExplanation) return 'Root cause analysis will be provided in the AI analysis.'
+  const sentences = technicalExplanation.split('.')
+  return sentences[0] + '.'
+}
+
+const extractImpact = (technicalExplanation: string) => {
+  if (!technicalExplanation) return 'Impact analysis will be provided in the AI analysis.'
+  const sentences = technicalExplanation.split('.')
+  return sentences.length > 1 ? sentences[1] + '.' : 'Impact analysis not available.'
+}
+
+const extractFixSteps = (technicalExplanation: string) => {
+  if (!technicalExplanation) return ['Detailed fix steps will be provided in the AI analysis.']
+  const steps = technicalExplanation.split(/\d+\./).filter(step => step.trim().length > 10)
+  return steps.length > 0 ? steps.slice(0, 3).map(step => step.trim()) : ['Implement security best practices', 'Follow the recommended remediation', 'Conduct security testing']
+}
+
+const getPriorityClass = (vulnerability: any) => {
+  if (!vulnerability) return 'medium'
+  if (vulnerability.severity === 'critical') return 'critical'
+  if (vulnerability.severity === 'high') return 'high'
+  if (vulnerability.severity === 'medium') return 'medium'
+  return 'low'
+}
+
+const getPriorityText = (vulnerability: any) => {
+  if (!vulnerability) return 'Medium'
+  if (vulnerability.severity === 'critical') return 'Immediate'
+  if (vulnerability.severity === 'high') return 'High'
+  if (vulnerability.severity === 'medium') return 'Medium'
+  return 'Low'
+}
+
+const getExploitationLikelihood = (vulnerability: any) => {
+  const severity = vulnerability?.severity
+  if (severity === 'critical') return 'Very High'
+  if (severity === 'high') return 'High'
+  if (severity === 'medium') return 'Medium'
+  return 'Low'
+}
+
+const getLikelihoodPercentage = (vulnerability: any) => {
+  const severity = vulnerability?.severity
+  if (severity === 'critical') return '85%'
+  if (severity === 'high') return '70%'
+  if (severity === 'medium') return '50%'
+  return '30%'
+}
+
+const getBusinessImpact = (vulnerability: any) => {
+  const severity = vulnerability?.severity
+  if (severity === 'critical') return 'Severe'
+  if (severity === 'high') return 'High'
+  if (severity === 'medium') return 'Moderate'
+  return 'Low'
+}
+
+const getImpactPercentage = (vulnerability: any) => {
+  const severity = vulnerability?.severity
+  if (severity === 'critical') return '90%'
+  if (severity === 'high') return '75%'
+  if (severity === 'medium') return '60%'
+  return '40%'
+}
+
+const copyAnalysis = () => {
+  let textToCopy = ''
+  switch (currentAnalysisType.value) {
+    case 'simple':
+      textToCopy = currentAIAnalysis.value.simple_explanation
+      break
+    case 'technical':
+      textToCopy = currentAIAnalysis.value.technical_explanation
+      break
+    case 'risk':
+      textToCopy = currentAIAnalysis.value.risk_assessment
+      break
+  }
+  
+  navigator.clipboard.writeText(textToCopy)
+}
+
+const exportAnalysis = () => {
+  console.log('Export analysis functionality')
+}
 </script>
 
 <style scoped>
+/* Main Layout */
+.main-content-with-ai {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  min-height: 80vh;
+  gap: 0;
+}
+
+.scanner-section {
+  background: #0a0a0a;
+  padding: 2rem 0;
+}
+
+.ai-analysis-section {
+  background: rgba(10, 10, 10, 0.95);
+  border-left: 1px solid rgba(0, 240, 255, 0.2);
+  height: 100%;
+  position: sticky;
+  top: 0;
+}
+
+.ai-analysis-section.has-selection {
+  background: rgba(15, 15, 15, 0.98);
+}
+
+.ai-analysis-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scanner Results */
+.vulnerabilities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.vulnerability-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.vulnerability-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(0, 240, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.vulnerability-card.active {
+  background: rgba(0, 240, 255, 0.1);
+  border-color: #00f0ff;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+}
+
+.vuln-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.severity-badge {
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-family: 'Courier New', monospace;
+}
+
+.severity-badge.critical { background: rgba(255, 68, 68, 0.2); color: #ff4444; border: 1px solid #ff4444; }
+.severity-badge.high { background: rgba(255, 107, 53, 0.2); color: #ff6b35; border: 1px solid #ff6b35; }
+.severity-badge.medium { background: rgba(255, 165, 0, 0.2); color: #ffa500; border: 1px solid #ffa500; }
+.severity-badge.low { background: rgba(0, 255, 65, 0.2); color: #00ff41; border: 1px solid #00ff41; }
+
+.cvss-score {
+  font-family: 'Courier New', monospace;
+  color: #00f0ff;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.vuln-title {
+  font-family: 'Orbitron', monospace;
+  color: white;
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.vuln-description {
+  color: #ccc;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.vuln-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.analysis-indicator {
+  color: #b967ff;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.select-btn {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #ccc;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.select-btn:hover {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: #00f0ff;
+  color: #00f0ff;
+}
+
+.select-btn.selected {
+  background: rgba(0, 240, 255, 0.3);
+  border-color: #00f0ff;
+  color: #00f0ff;
+}
+
+/* AI Analysis Section */
+.ai-header {
+  padding: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ai-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ai-icon {
+  font-size: 2rem;
+}
+
+.title-content h3 {
+  color: #00f0ff;
+  margin: 0;
+  font-family: 'Orbitron', monospace;
+  font-size: 1.3rem;
+}
+
+.title-content p {
+  color: #ccc;
+  margin: 0.25rem 0 0 0;
+  font-size: 0.85rem;
+}
+
+.status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-family: 'Courier New', monospace;
+}
+
+.status-badge.critical { background: rgba(255, 68, 68, 0.2); color: #ff4444; border: 1px solid #ff4444; }
+.status-badge.high { background: rgba(255, 107, 53, 0.2); color: #ff6b35; border: 1px solid #ff6b35; }
+.status-badge.medium { background: rgba(255, 165, 0, 0.2); color: #ffa500; border: 1px solid #ffa500; }
+.status-badge.low { background: rgba(0, 255, 65, 0.2); color: #00ff41; border: 1px solid #00ff41; }
+
+/* Selected Vulnerability */
+.selected-vulnerability {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.selected-title {
+  color: white;
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+  font-family: 'Orbitron', monospace;
+}
+
+.selected-description {
+  color: #ccc;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.vuln-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  color: #888;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.stat-value {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.stat-value.critical { color: #ff4444; }
+.stat-value.high { color: #ff6b35; }
+.stat-value.medium { color: #ffa500; }
+.stat-value.low { color: #00ff41; }
+
+/* Analysis Interface */
+.analysis-interface {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.analysis-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tab-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem;
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.8rem;
+}
+
+.tab-btn:hover {
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.05);
+}
+
+.tab-btn.active {
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.1);
+  border-bottom: 2px solid #00f0ff;
+}
+
+.tab-icon {
+  font-size: 1.2rem;
+}
+
+.tab-text {
+  font-weight: 600;
+}
+
+.analysis-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 2rem;
+}
+
+.loading-animation {
+  margin-bottom: 1rem;
+}
+
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00f0ff;
+  animation: bounce 1.4s infinite ease-in-out;
+}
+
+.dot:nth-child(1) { animation-delay: -0.32s; }
+.dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.loading-text {
+  color: #00f0ff;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.loading-subtext {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+/* Error State */
+.error-state {
+  text-align: center;
+  padding: 2rem;
+}
+
+.error-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.error-state h5 {
+  color: #ff6b35;
+  margin-bottom: 0.5rem;
+  font-family: 'Orbitron', monospace;
+}
+
+.error-state p {
+  color: #ccc;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.retry-btn {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 107, 53, 0.2);
+  border: 1px solid #ff6b35;
+  border-radius: 6px;
+  color: #ff6b35;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.retry-btn:hover {
+  background: rgba(255, 107, 53, 0.3);
+}
+
+/* Analysis Views */
+.view-header {
+  margin-bottom: 1.5rem;
+}
+
+.view-header h5 {
+  color: #00f0ff;
+  margin-bottom: 0.5rem;
+  font-family: 'Orbitron', monospace;
+}
+
+.view-header p {
+  color: #888;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.view-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Simple View */
+.explanation-card {
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.explanation-card p {
+  color: #ccc;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.key-points h6 {
+  color: #00ff41;
+  margin-bottom: 1rem;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.9rem;
+}
+
+.points-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.point {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.point-number {
+  background: #00ff41;
+  color: black;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.point-text {
+  color: #ccc;
+  line-height: 1.5;
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+/* Technical View */
+.tech-section {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tech-section h6 {
+  color: #00f0ff;
+  margin-bottom: 0.75rem;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.9rem;
+}
+
+.tech-section p {
+  color: #ccc;
+  line-height: 1.6;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.step-number {
+  background: rgba(0, 240, 255, 0.2);
+  color: #00f0ff;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-family: 'Courier New', monospace;
+}
+
+.step-text {
+  color: #ccc;
+  line-height: 1.5;
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+/* Risk View */
+.risk-summary {
+  background: rgba(255, 107, 53, 0.05);
+  border: 1px solid rgba(255, 107, 53, 0.2);
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.risk-summary p {
+  color: #ccc;
+  line-height: 1.6;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.risk-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.metric {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.metric-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.metric-label {
+  color: #ccc;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.metric-value {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.metric-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff4444, #ff6b35);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* No Analysis */
+.no-analysis {
+  padding: 2rem;
+  text-align: center;
+}
+
+.no-analysis-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ai-graphic {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.no-analysis h5 {
+  color: #00f0ff;
+  margin: 0;
+  font-family: 'Orbitron', monospace;
+}
+
+.no-analysis p {
+  color: #ccc;
+  margin: 0;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.generate-btn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #00f0ff, #b967ff);
+  border: none;
+  border-radius: 8px;
+  color: black;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Orbitron', monospace;
+}
+
+.generate-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 240, 255, 0.3);
+}
+
+.generate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* No Selection */
+.no-selection {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.no-selection-content {
+  text-align: center;
+  max-width: 300px;
+}
+
+.selection-graphic {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.7;
+}
+
+.no-selection h4 {
+  color: #00f0ff;
+  margin-bottom: 1rem;
+  font-family: 'Orbitron', monospace;
+}
+
+.no-selection p {
+  color: #ccc;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+}
+
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.feature-icon {
+  font-size: 1.1rem;
+}
+
+/* Analysis Actions */
+.analysis-actions {
+  padding: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  gap: 0.75rem;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.action-btn.copy:hover {
+  border-color: #00ff41;
+  color: #00ff41;
+}
+
+.action-btn.export:hover {
+  border-color: #00f0ff;
+  color: #00f0ff;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .main-content-with-ai {
+    grid-template-columns: 1fr;
+  }
+  
+  .ai-analysis-section {
+    border-left: none;
+    border-top: 1px solid rgba(0, 240, 255, 0.2);
+  }
+}
+
+@media (max-width: 768px) {
+  .vuln-stats {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .analysis-tabs {
+    grid-template-columns: 1fr;
+  }
+  
+  .ai-header {
+    padding: 1.5rem;
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .ai-title {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
 /* Add new styles for demo mode and enhanced UI */
 .demo-mode-indicator {
   display: flex;
