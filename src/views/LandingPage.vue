@@ -472,9 +472,10 @@ const currentScanResult = ref<any>({
 })
 
 const globalStats = ref({
-  total_scans: 1247,
-  high_risk_scans: 283,
-  total_vulnerabilities_found: 892
+  total_scans: 0,
+  high_risk_scans: 0,
+  total_vulnerabilities_found: 0,
+  average_scan_duration: 0
 })
 
 const liveThreats = ref<any[]>([])
@@ -504,14 +505,6 @@ const initiateQuickScan = async () => {
     return
   }
 
-  // For landing page, always use demo mode for quick scans
-  // if (!checkAuthentication()) {
-  //   showStatus('info', 'Using demo mode - sign in for full features')
-  //   await mockScan()
-  //   return
-  // }
-
-  // If authenticated, try real scan
   scanning.value = true
   scanProgress.value = 0
   scanComplete.value = false
@@ -544,10 +537,10 @@ const initiateQuickScan = async () => {
     await simulateScanProgress()
     
     currentScanResult.value = {
-      risk_score: data.findings?.risk_score || calculateRiskScore(data.findings),
+      risk_score: data.risk_score || 0,
       target_url: targetUrl.value,
-      scan_duration: data.scan_duration || Math.random() * 30 + 10,
-      total_vulnerabilities: data.findings?.vulnerabilities?.length || 0,
+      scan_duration: data.scan_duration || 0,
+      total_vulnerabilities: data.total_vulnerabilities || 0,
       vulnerabilities: data.findings?.vulnerabilities || []
     }
     
@@ -557,12 +550,13 @@ const initiateQuickScan = async () => {
     scanning.value = false
     showStatus('success', 'Security scan completed successfully!')
     
+    // Reload global stats to reflect new scan
     loadGlobalStats()
     
   } catch (error) {
     console.error('Scan failed:', error)
-    showStatus('warning', 'Using demo mode - backend unavailable')
-    await mockScan()
+    showStatus('error', 'Scan failed. Please try again.')
+    scanning.value = false
   }
 }
 
@@ -581,18 +575,6 @@ const simulateScanProgress = async () => {
   }
 }
 
-const calculateRiskScore = (findings: any) => {
-  if (!findings) return Math.floor(Math.random() * 40) + 30
-  let score = 0
-  if (findings.vulnerabilities && findings.vulnerabilities.length > 0) {
-    score += Math.min(findings.vulnerabilities.length * 10, 60)
-  }
-  if (findings.threat_intel && findings.threat_intel.risk_score) {
-    score += findings.threat_intel.risk_score * 0.4
-  }
-  return Math.min(100, score)
-}
-
 const updateDetectedVulnerabilities = (vulnerabilities: any[]) => {
   const vulnTypes = ['xss', 'sqli', 'rce', 'csrf', 'lfi']
   detectedVulnerabilities.value = vulnTypes.map(type => {
@@ -608,41 +590,6 @@ const updateDetectedVulnerabilities = (vulnerabilities: any[]) => {
       severity: detected ? 'high' : 'low'
     }
   })
-}
-
-const mockScan = async () => {
-  isDemoMode.value = true
-  await simulateScanProgress()
-  
-  currentScanResult.value = {
-    risk_score: Math.floor(Math.random() * 40) + 60,
-    target_url: targetUrl.value,
-    scan_duration: Math.random() * 20 + 15,
-    total_vulnerabilities: 3,
-    vulnerabilities: [
-      {
-        id: 1,
-        title: 'Missing Security Headers',
-        description: 'Content Security Policy (CSP) and HTTP Strict Transport Security (HSTS) headers are not implemented',
-        severity: 'medium',
-        cvss_score: 5.2,
-        recommendation: 'Implement security headers in web server configuration'
-      },
-      {
-        id: 2,
-        title: 'Cross-Site Scripting (XSS) Vulnerability',
-        description: 'User input not properly sanitized in search functionality',
-        severity: 'high',
-        cvss_score: 7.4,
-        recommendation: 'Implement input validation and output encoding'
-      }
-    ]
-  }
-  
-  updateDetectedVulnerabilities(currentScanResult.value.vulnerabilities)
-  scanComplete.value = true
-  scanning.value = false
-  showStatus('success', 'Demo scan completed! Sign in for full features.')
 }
 
 const startQuickScan = () => {
@@ -690,15 +637,40 @@ const loadGlobalStats = async () => {
       const data = await response.json()
       if (data.length > 0) {
         globalStats.value = data[0]
+      } else if (data.total_scans !== undefined) {
+        // Handle single object response
+        globalStats.value = data
       }
       isDemoMode.value = false
+      backendAvailable.value = true
     } else {
-      // Use mock data if API fails
-      useMockData()
+      // Use real database data even if API structure is different
+      await loadRealStatsFromDB()
     }
   } catch (error) {
     console.error('Failed to load global stats:', error)
-    useMockData()
+    await loadRealStatsFromDB()
+  }
+}
+
+const loadRealStatsFromDB = async () => {
+  try {
+    // Alternative endpoint or direct database stats
+    const response = await fetch(`${API_BASE}/scan-results/stats/`, {
+      headers: getAuthHeaders()
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      globalStats.value = data
+    } else {
+      // Calculate from available data
+      globalStats.value.total_scans = ScanResult.objects?.count() || 0
+      globalStats.value.high_risk_scans = ScanResult.objects?.filter(risk_score__gte=70)?.count() || 0
+      globalStats.value.total_vulnerabilities_found = Vulnerability.objects?.count() || 0
+    }
+  } catch (error) {
+    console.error('Failed to load real stats:', error)
   }
 }
 
@@ -713,48 +685,44 @@ const loadThreatIntelligence = async () => {
       liveThreats.value = data
       isDemoMode.value = false
     } else {
-      loadMockThreats()
+      await loadRealThreats()
     }
   } catch (error) {
     console.error('Failed to load threat intelligence:', error)
-    loadMockThreats()
+    await loadRealThreats()
   }
 }
 
-const useMockData = () => {
-  isDemoMode.value = true
-  globalStats.value = {
-    total_scans: 1247,
-    high_risk_scans: 283,
-    total_vulnerabilities_found: 892
-  }
-}
-
-const loadMockThreats = () => {
-  isDemoMode.value = true
-  liveThreats.value = [
-    { 
-      id: 1, 
-      type: 'XSS', 
-      title: 'Cross-Site Scripting Attack', 
-      detected_at: new Date(Date.now() - 2000).toISOString(), 
-      severity: 'high' 
-    },
-    { 
-      id: 2, 
-      type: 'SQLi', 
-      title: 'SQL Injection Attempt', 
-      detected_at: new Date(Date.now() - 5000).toISOString(), 
-      severity: 'critical' 
-    },
-    { 
-      id: 3, 
-      type: 'RCE', 
-      title: 'Remote Code Execution', 
-      detected_at: new Date(Date.now() - 8000).toISOString(), 
-      severity: 'critical' 
+const loadRealThreats = async () => {
+  try {
+    // Try alternative endpoint for threats
+    const response = await fetch(`${API_BASE}/threats/active/`, {
+      headers: getAuthHeaders()
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      liveThreats.value = data
+    } else {
+      // Get threats from vulnerabilities
+      const vulnResponse = await fetch(`${API_BASE}/vulnerabilities/recent/`, {
+        headers: getAuthHeaders()
+      })
+      
+      if (vulnResponse.ok) {
+        const vulns = await vulnResponse.json()
+        liveThreats.value = vulns.map((vuln: any, index: number) => ({
+          id: index + 1,
+          type: vuln.title.split(' ')[0].toUpperCase(),
+          title: vuln.title,
+          detected_at: vuln.created_at,
+          severity: vuln.severity
+        }))
+      }
     }
-  ]
+  } catch (error) {
+    console.error('Failed to load real threats:', error)
+  }
 }
 
 const loadLiveThreats = () => {
@@ -801,7 +769,7 @@ const checkBackendConnection = async () => {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 5000)
     
-    const response = await fetch(`${API_BASE}/global-stats/`, {
+    const response = await fetch(`${API_BASE}/health/`, {
       method: 'GET',
       headers: getAuthHeaders(),
       signal: controller.signal
@@ -816,13 +784,13 @@ const checkBackendConnection = async () => {
     } else {
       backendAvailable.value = false
       isDemoMode.value = true
-      showStatus('info', 'Using demo mode - limited functionality')
+      showStatus('info', 'Using limited functionality mode')
     }
   } catch (error) {
-    console.warn('Backend not available, using demo mode:', error)
+    console.warn('Backend not available:', error)
     backendAvailable.value = false
     isDemoMode.value = true
-    showStatus('info', 'Using demo mode - limited functionality')
+    showStatus('info', 'Using limited functionality mode')
   }
 }
 
